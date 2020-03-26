@@ -1,16 +1,22 @@
-import { AuthService } from './../../services/auth.service';
-import { User } from './../../interfaces/user';
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { IonSlides, LoadingController, ToastController } from '@ionic/angular';
-
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Keyboard } from '@ionic-native/keyboard/ngx';
+import { IonSlides, LoadingController, ToastController } from '@ionic/angular';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+
+import { User } from '../../interfaces/user';
+import { AuthService } from './../../services/auth.service';
+import { UserService } from './../../services/user.service';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.page.html',
   styleUrls: ['./login.page.scss'],
 })
-export class LoginPage implements OnInit {
+export class LoginPage implements OnInit, OnDestroy {
+
+  private loading: any;
+  private unsub$ = new Subject();
 
   @ViewChild(IonSlides, { static: true }) slides: IonSlides;
 
@@ -19,15 +25,20 @@ export class LoginPage implements OnInit {
 
   userLogin: User = {};
   userRegister: User = {};
-  private loading: any;
 
   constructor(
     public keyboard: Keyboard,
     private authService: AuthService,
+    private userService: UserService,
     private loadingCtrl: LoadingController,
     private toastCtrl: ToastController) { }
 
   ngOnInit() {
+  }
+
+  ngOnDestroy(): void {
+    this.unsub$.next();
+    this.unsub$.complete();
   }
 
   async login() {
@@ -35,6 +46,14 @@ export class LoginPage implements OnInit {
 
     try {
       await this.authService.login(this.userLogin);
+
+      this.userService.getUser(this.authService.getAuth().currentUser.uid)
+        .pipe(
+          takeUntil(this.unsub$)
+        )
+        .subscribe(user => {
+          this.presentToast(`Seja bem-vindo, ${user.name}`);
+        });
     }
     catch (err) {
       console.error(err);
@@ -49,7 +68,8 @@ export class LoginPage implements OnInit {
     await this.presentLoading();
 
     try {
-      await this.authService.register(this.userRegister);
+      const newUser = await this.authService.register(this.userRegister);
+      await this.userService.addUser(newUser.user.uid, this.userRegister);
     }
     catch (err) {
       console.error(err);
@@ -61,7 +81,6 @@ export class LoginPage implements OnInit {
   }
 
   segmentChanged(event: any) {
-
     const { value } = event.detail;
 
     if (value === 'login') {
@@ -71,8 +90,6 @@ export class LoginPage implements OnInit {
       this.slides.slideNext();
       this.wavesPosition -= this.wavesDifferece;
     }
-
-    console.log(event);
   }
 
   async presentLoading() {

@@ -43,7 +43,8 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   canDeleteProduct(product: Product) {
-    return product.userId === this.authService.getAuth().currentUser.uid;
+    const { uid } = this.authService.getAuth().currentUser || { uid: '' };
+    return product.userId === uid;
   }
 
   async deleteProduct(id: string) {
