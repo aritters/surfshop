@@ -1,23 +1,19 @@
-import { takeUntil } from 'rxjs/operators';
-import { ProductService } from './../../services/product.service';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { LoadingController, ToastController, NavController } from '@ionic/angular';
+import { LoadingController, NavController, ToastController } from '@ionic/angular';
+import { takeUntil } from 'rxjs/operators';
 
+import { BasePage } from '../base-page';
 import { Product } from './../../interfaces/product';
 import { AuthService } from './../../services/auth.service';
-import { Subject } from 'rxjs';
+import { ProductService } from './../../services/product.service';
 
 @Component({
   selector: 'app-product-details',
   templateUrl: './product-details.page.html',
   styleUrls: ['./product-details.page.scss'],
 })
-export class ProductDetailsPage implements OnInit, OnDestroy {
-
-  private unsub$ = new Subject();
-
-  private loading: any;
+export class ProductDetailsPage extends BasePage {
 
   product: Product = {};
   productId: string = null;
@@ -27,26 +23,21 @@ export class ProductDetailsPage implements OnInit, OnDestroy {
   }
 
   constructor(
-    private loadingCtrl: LoadingController,
-    private toastCtrl: ToastController,
     private navCtrl: NavController,
     private authService: AuthService,
     private productService: ProductService,
-    private activatedRoute: ActivatedRoute
-  ) {
+    private activatedRoute: ActivatedRoute,
+    loadingCtrl: LoadingController,
+    toastCtrl: ToastController) {
+    super(loadingCtrl, toastCtrl);
+  }
+
+  ionViewWillEnter() {
     this.productId = this.activatedRoute.snapshot.params['id'];
 
     if (!!this.productId) {
       this.loadProduct();
     }
-  }
-
-  ngOnInit() {
-  }
-
-  ngOnDestroy(): void {
-    this.unsub$.next();
-    this.unsub$.complete();
   }
 
   loadProduct() {
@@ -93,19 +84,4 @@ export class ProductDetailsPage implements OnInit, OnDestroy {
       }
     }
   }
-
-  async presentLoading() {
-    this.loading = await this.loadingCtrl.create({ message: 'Por favor, aguarde...' });
-    return this.loading.present();
-  }
-
-  async presentToast(message: string) {
-    const toast = await this.toastCtrl.create({
-      message,
-      duration: 2000
-    });
-
-    return toast.present();
-  }
-
 }

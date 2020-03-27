@@ -1,45 +1,39 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { LoadingController, ToastController } from '@ionic/angular';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { of, Observable } from 'rxjs';
+import { catchError, takeUntil } from 'rxjs/operators';
 
 import { Product } from './../../interfaces/product';
 import { AuthService } from './../../services/auth.service';
 import { ProductService } from './../../services/product.service';
+import { BasePage } from './../base-page';
 
 @Component({
   selector: 'app-home',
   templateUrl: './home.page.html',
   styleUrls: ['./home.page.scss'],
 })
-export class HomePage implements OnInit, OnDestroy {
+export class HomePage extends BasePage {
 
-  private loading: any;
-  private unsub$ = new Subject();
-
-  products: Product[] = [];
+  products$: Observable<Product[]>;
 
   constructor(
-    private loadingCtrl: LoadingController,
-    private toastCtrl: ToastController,
     private productService: ProductService,
-    private authService: AuthService
-  ) {
-    this.productService.getProducts()
+    private authService: AuthService,
+    toastCtrl: ToastController,
+    loadingCtrl: LoadingController) {
+    super(loadingCtrl, toastCtrl);
+  }
+
+  ionViewWillEnter() {
+    this.products$ = this.productService.getProducts()
       .pipe(
-        takeUntil(this.unsub$)
-      )
-      .subscribe(data => {
-        this.products = data;
-      });
-  }
-
-  ngOnInit(): void {
-  }
-
-  ngOnDestroy(): void {
-    this.unsub$.next();
-    this.unsub$.complete();
+        takeUntil(this.unsub$),
+        catchError(error => {
+          console.error('erro => ', error);
+          return of(new Array<Product>());
+        })
+      );
   }
 
   canDeleteProduct(product: Product) {
@@ -64,26 +58,14 @@ export class HomePage implements OnInit, OnDestroy {
 
   async logout() {
     try {
+      this.tryCompleteUnsubscriber();
+
       await this.authService.logout();
     }
     catch (error) {
       console.error(error);
       this.presentToast('Erro ao sair da conta');
     }
-  }
-
-  async presentLoading() {
-    this.loading = await this.loadingCtrl.create({ message: 'Por favor, aguarde...' });
-    return this.loading.present();
-  }
-
-  async presentToast(message: string) {
-    const toast = await this.toastCtrl.create({
-      message,
-      duration: 2000
-    });
-
-    return toast.present();
   }
 
 }

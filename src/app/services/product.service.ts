@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/firestore';
+import { AngularFirestore, AngularFirestoreCollection, DocumentReference } from '@angular/fire/firestore';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { Product } from './../interfaces/product';
-import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -15,7 +16,7 @@ export class ProductService {
     this.productsCollection = this.afs.collection<Product>('Products');
   }
 
-  getProducts() {
+  getProducts(): Observable<Product[]> {
     return this.productsCollection.snapshotChanges()
       .pipe(
         map(actions => {
@@ -29,19 +30,19 @@ export class ProductService {
       );
   }
 
-  getProduct(id: string) {
+  getProduct(id: string): Observable<Product> {
     return this.productsCollection.doc<Product>(id).valueChanges();
   }
 
-  addProduct(product: Product) {
+  addProduct(product: Product): Promise<DocumentReference> {
     return this.productsCollection.add(product);
   }
 
-  updateProduct(id: string, product: Product) {
+  updateProduct(id: string, product: Product): Promise<void> {
     return this.productsCollection.doc<Product>(id).update(product);
   }
 
-  deleteProduct(id: string) {
+  deleteProduct(id: string): Promise<void> {
     return this.productsCollection.doc<Product>(id).delete();
   }
 }

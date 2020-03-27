@@ -5,44 +5,54 @@
 </ion-header>
 
 <ion-content>
-  <ion-list *ngIf="!products.length">
-    <ion-item *ngFor="let item of [0, 1, 2]">
-      <ion-avatar slot="start">
-        <ion-skeleton-text animated></ion-skeleton-text>
-      </ion-avatar>
-      <ion-label>
-        <h3>
-          <ion-skeleton-text animated style="width: 50%"></ion-skeleton-text>
-        </h3>
-        <p>
-          <ion-skeleton-text animated style="width: 80%"></ion-skeleton-text>
-        </p>
-        <p>
-          <ion-skeleton-text animated style="width: 30%"></ion-skeleton-text>
-        </p>
-      </ion-label>
-    </ion-item>
-  </ion-list>
+  <ng-container *ngIf="products$ | async as products; else loading">
 
-  <ion-list>
-    <ng-container *ngFor="let product of products">
+    <ion-list *ngIf="!!products.length; else no_products">
+      <ng-container *ngFor="let product of products">
 
-      <ion-item-sliding *ngIf="canDeleteProduct(product); else no_sliding_item">
-        <app-product-item [product]="product"></app-product-item>
+        <ion-item-sliding *ngIf="canDeleteProduct(product); else no_sliding_item">
+          <app-product-item [product]="product"></app-product-item>
 
-        <ion-item-options side="end">
-          <ion-item-option color="danger" (click)="deleteProduct(product.id)">
-            <ion-icon slot="icon-only" name="trash"></ion-icon>
-          </ion-item-option>
-        </ion-item-options>
-      </ion-item-sliding>
+          <ion-item-options side="end">
+            <ion-item-option color="danger" (click)="deleteProduct(product.id)">
+              <ion-icon slot="icon-only" name="trash"></ion-icon>
+            </ion-item-option>
+          </ion-item-options>
+        </ion-item-sliding>
 
-      <ng-template #no_sliding_item>
-        <app-product-item [product]="product"></app-product-item>
-      </ng-template>
+        <ng-template #no_sliding_item>
+          <app-product-item [product]="product"></app-product-item>
+        </ng-template>
 
-    </ng-container>
-  </ion-list>
+      </ng-container>
+    </ion-list>
+
+    <ng-template #no_products>
+      <ion-label>Nenhum produto encontrado</ion-label>
+    </ng-template>
+
+    <ng-template #loading>
+      <ion-list>
+        <ion-item *ngFor="let item of [0, 1, 2]">
+          <ion-avatar slot="start">
+            <ion-skeleton-text animated></ion-skeleton-text>
+          </ion-avatar>
+          <ion-label>
+            <h3>
+              <ion-skeleton-text animated style="width: 50%"></ion-skeleton-text>
+            </h3>
+            <p>
+              <ion-skeleton-text animated style="width: 80%"></ion-skeleton-text>
+            </p>
+            <p>
+              <ion-skeleton-text animated style="width: 30%"></ion-skeleton-text>
+            </p>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+    </ng-template>
+
+  </ng-container>
 </ion-content>
 
 <ion-footer>

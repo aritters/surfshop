@@ -1,10 +1,10 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { Keyboard } from '@ionic-native/keyboard/ngx';
 import { IonSlides, LoadingController, ToastController } from '@ionic/angular';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { take } from 'rxjs/operators';
 
 import { User } from '../../interfaces/user';
+import { BasePage } from '../base-page';
 import { AuthService } from './../../services/auth.service';
 import { UserService } from './../../services/user.service';
 
@@ -13,10 +13,7 @@ import { UserService } from './../../services/user.service';
   templateUrl: './login.page.html',
   styleUrls: ['./login.page.scss'],
 })
-export class LoginPage implements OnInit, OnDestroy {
-
-  private loading: any;
-  private unsub$ = new Subject();
+export class LoginPage extends BasePage {
 
   @ViewChild(IonSlides, { static: true }) slides: IonSlides;
 
@@ -30,15 +27,9 @@ export class LoginPage implements OnInit, OnDestroy {
     public keyboard: Keyboard,
     private authService: AuthService,
     private userService: UserService,
-    private loadingCtrl: LoadingController,
-    private toastCtrl: ToastController) { }
-
-  ngOnInit() {
-  }
-
-  ngOnDestroy(): void {
-    this.unsub$.next();
-    this.unsub$.complete();
+    loadingCtrl: LoadingController,
+    toastCtrl: ToastController) {
+    super(loadingCtrl, toastCtrl);
   }
 
   async login() {
@@ -49,10 +40,10 @@ export class LoginPage implements OnInit, OnDestroy {
 
       this.userService.getUser(this.authService.getAuth().currentUser.uid)
         .pipe(
-          takeUntil(this.unsub$)
+          take(1)
         )
         .subscribe(user => {
-          this.presentToast(`Seja bem-vindo, ${user.name}`);
+          this.presentToast(`Bem-vindo, ${user.name}`);
         });
     }
     catch (err) {
@@ -90,20 +81,6 @@ export class LoginPage implements OnInit, OnDestroy {
       this.slides.slideNext();
       this.wavesPosition -= this.wavesDifferece;
     }
-  }
-
-  async presentLoading() {
-    this.loading = await this.loadingCtrl.create({ message: 'Por favor, aguarde...' });
-    return this.loading.present();
-  }
-
-  async presentToast(message: string) {
-    const toast = await this.toastCtrl.create({
-      message,
-      duration: 2000
-    });
-
-    return toast.present();
   }
 
 }
